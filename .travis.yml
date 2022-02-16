@@ -14,13 +14,12 @@ cache:
 
 script: "./gradlew clean build"
 
-# CI 실행 완료 시 메일로 알람
-notifications:
-  email:
-    recipients:
-      - phj2784@naver.com록
-
 before_deploy:
+  - zip -r springboot2-webservice
+  - mkdir -p deploy
+  - mv springboot2-webservice.zip deploy/springboot2-webservice.zip
+
+deploy:
   - provider: s3
     access_key_id: $ASW_ACCESS_KEY
     secret_access_key: $AWS_SECRET_KEY #Travis repo settings에 설정된 값
@@ -30,3 +29,21 @@ before_deploy:
     acl: private #zip 파일 접근성 설정
     local_dir: deploy
     wait-until-deployed: true
+  - provider: codedeploy
+      access_key_id: $AWS_ACCESS_KEY
+      secret_access_key: $AWS_ACCESS_KEY
+      bucket: soodo-webservice-build
+      key: springboot2-webservice.zip #빌드 파일을 압축해서 전달
+
+      bundle_type: zip #압축 확장자
+      applicaiton: springboot2-webservice #웹 콘솔에서 등록한 CodeDeploy 애플리케이션
+
+      deployment_group: springboot2-webservice-group #웹 콘솔에서 등록한 CodeDeploy 배포 그룹
+      region: ap-northeast-2
+      wait-until-deployed: true
+
+# CI 실행 완료 시 메일로 알람
+notifications:
+  email:
+    recipients:
+      - phj2784@naver.com록
